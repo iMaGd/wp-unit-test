@@ -29,4 +29,8 @@ COPY tmp_build /var/www/html/wp-content/plugins/${WP_PLUGIN_SLUG}/
 
 RUN chown -R www-data:www-data /var/www/html
 
+# allow trusted plugin
+RUN composer config --global allow-plugins.composer/installers true
+
+# install deps
 RUN composer install --working-dir=/var/www/html/wp-content/plugins/${WP_PLUGIN_SLUG}
