@@ -1,0 +1,74 @@
+variables:
+  DOCKER_TLS_CERTDIR: "" # Required to allow docker-in-docker. Make sure to set in `privileged` to true in `/etc/gitlab-runner/config.toml` config of runner
+
+
+unit-test:
+  stage: test
+  image: docker:28.1
+  services:
+    - name: docker:28.1-dind
+  before_script:
+    - echo "Loading .env file..."
+    - set -a
+    - source ci/docker/.env.testing
+    - set +a
+    - apk add --no-cache curl rsync
+  script:
+    - echo "Copying plugin files to temp build directory..."
+    - >
+      rsync -av
+      --exclude='.stage'
+      --exclude='ci'
+      --exclude='.git'
+      --exclude='.env'
+      --exclude='*.md'
+      --exclude='*.lock'
+      --exclude='*.sh'
+      --delete-after
+      ./ ./ci/docker/tmp_build/
+
+    - echo "Starting WordPress and DB services..."
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d --build
+
+    - echo "Waiting for DB to be ready..."
+    - until docker compose -f ci/docker/compose.yml exec database mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
+        sleep 1;
+      done
+
+    - echo "Installing WordPress and activating plugin..."
+    - >
+      docker compose -f ci/docker/compose.yml exec wordpress wp core install
+      --url=http://127.0.0.1:$APP_PORT
+      --title='WP Local'
+      --admin_user=$WP_USER
+      --admin_password=$WP_PASS
+      --admin_email=$WP_EMAIL
+      --allow-root
+
+    - echo "Activating the plugin ..."
+    - docker compose -f ci/docker/compose.yml exec wordpress wp plugin activate $WP_PLUGIN_SLUG --allow-root
+
+    # Create reports directory
+    - mkdir reports
+
+    - echo "Running Plugin Check..."
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin install plugin-check --allow-root
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin activate plugin-check --allow-root
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin check $WP_PLUGIN_SLUG --exclude-files=.* --allow-root > reports/plugin-check-report.md
+    - echo "==================================="
+    - cat reports/plugin-check-report.md
+    - echo "==================================="
+
+    - echo "Running PHPUnit tests..."
+    - docker compose -f ci/docker/compose.yml exec -w /var/www/html/wp-content/plugins/$WP_PLUGIN_SLUG wordpress ./vendor/bin/phpunit
+
+    - echo "Copying PHPUnit report to host path for artifact report..."
+    - docker compose -f ci/docker/compose.yml cp wordpress:/var/www/html/wp-content/plugins/$WP_PLUGIN_SLUG/reports/phpunit.xml reports/phpunit-report.xml
+
+  artifacts:
+    when: always
+    paths:
+      - reports/plugin-check-report.md
+    reports:
+      junit: reports/phpunit-report.xml
+    expire_in: "90 days"
