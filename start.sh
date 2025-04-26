@@ -5,7 +5,7 @@ set -a
 source ci/docker/.env.testing
 set +a
 
-echo "Copying main plugin files (excluding .stage, ci, ..)"
+echo "Copying main plugin files as a pre-build (excluding .stage, ci, ..)"
 
 rsync -av \
   --exclude='.stage' \
@@ -19,12 +19,13 @@ rsync -av \
   ./ ./ci/docker/tmp_build/
 
 
+# start services
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml down --remove-orphans
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d --build --remove-orphans
 
 
 echo "Waiting for database container to get ready..."
-while ! docker compose -f ci/docker/compose.yml  exec database mysqladmin --user=root --password=root --host "127.0.0.1" ping --silent &> /dev/null ; do
+while ! docker compose -f ci/docker/compose.yml  exec database mysqladmin --user=root --password=$DB_ROOT_PASSWORD --host "127.0.0.1" ping --silent &> /dev/null ; do
     sleep 1
 done
 

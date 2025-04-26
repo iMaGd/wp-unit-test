@@ -5,6 +5,7 @@ services:
       dockerfile: ./wp/Dockerfile
       args:
         WORDPRESS_TAG: ${WORDPRESS_TAG:-6-php8.3-apache}
+        WP_PLUGIN_SLUG: ${WP_PLUGIN_SLUG:-wp-unit-test}
     restart: unless-stopped
     ports:
       - ${APP_PORT:-8050}:80
