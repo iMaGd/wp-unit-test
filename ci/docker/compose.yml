@@ -1,0 +1,47 @@
+services:
+  wordpress:
+    build:
+      context: .
+      dockerfile: ./wp/Dockerfile
+      args:
+        WORDPRESS_TAG: ${WORDPRESS_TAG:-6-php8.3-apache}
+    restart: unless-stopped
+    ports:
+      - ${APP_PORT:-8050}:80
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: ${DB_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-true}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG_DISPLAY', true);
+        define('WP_DEBUG_LOG', true);
+    depends_on:
+      - database
+    links:
+      - database
+
+  database:
+    # LTS (log-tem support) | Jammy (Ubuntu 22.04)
+    image: mariadb:lts-jammy
+    restart: unless-stopped
+    volumes:
+      - ${DB_DATA_DIR}:/var/lib/mysql
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-wordpress}
+      MARIADB_USER: ${DB_USER:-wordpress}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+  # pma:
+  #   image: phpmyadmin:5-apache
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${PMA_PORT:-8051}:80"
+  #   environment:
+  #     PMA_HOST: database
+  #     PMA_PORT: ${DB_PORT:-3306}
+  #     MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+  #   depends_on:
+  #     - database
