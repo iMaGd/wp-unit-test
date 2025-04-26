@@ -21,7 +21,9 @@ rsync -av \
 
 # start services
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml down --remove-orphans
-docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d --build --remove-orphans
+docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d \
+  --build --remove-orphans \
+  --renew-anon-volumes # removes old anonymous volumes attached to containers
 
 
 echo "Waiting for database container to get ready..."
