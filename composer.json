@@ -1,0 +1,12 @@
+{
+  "name": "depicter/wp-unit-test",
+  "license": "MIT",
+  "autoload-dev": {
+    "psr-4": {
+      "WPUnitTests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "*"
+  }
+}
