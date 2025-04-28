@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./wp/Dockerfile
       args:
-        WORDPRESS_TAG: ${WORDPRESS_TAG:-6-php8.3-apache}
+        WORDPRESS_BASE_IMAGE: ${WORDPRESS_BASE_IMAGE:-wordpress:6-php8.3-apache}
         WP_PLUGIN_SLUG: ${WP_PLUGIN_SLUG:-wp-unit-test}
     restart: unless-stopped
     volumes:
