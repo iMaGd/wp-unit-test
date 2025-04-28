@@ -21,8 +21,6 @@ rsync -av \
 # Remove redundant files
 rm -f ./ci/docker/tmp_build/.phpunit.result.cache ./ci/docker/tmp_build/composer.lock
 
-# # install deps
-composer install --working-dir=./ci/docker/tmp_build/
 
 # start services
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml down --remove-orphans
@@ -39,6 +37,9 @@ done
 
 echo "Setting WP login user .."
 docker compose -f ci/docker/compose.yml exec wordpress wp core install --path="/var/www/html" --url="http://127.0.0.1:$APP_PORT" --title="WP Local" --admin_user="$WP_USER" --admin_password="$WP_PASS" --admin_email="$WP_EMAIL" --allow-root
+
+# # install deps
+docker compose -f ci/docker/compose.yml exec -w /var/www/html/wp-content/plugins/$WP_PLUGIN_SLUG wordpress composer install
 
 # Activate the plugin
 docker compose -f ci/docker/compose.yml exec wordpress wp plugin activate $WP_PLUGIN_SLUG --path="/var/www/html" --url="http://127.0.0.1:$APP_PORT" --allow-root
@@ -61,7 +62,7 @@ docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml \
   --exclude-files=.* \
   --allow-root > ./.stage/reports/plugin-check-report.json
 
-cat ./.stage/reports/plugin-check-report.md
+cat ./.stage/reports/plugin-check-report.json
 
 URL="http://127.0.0.1:${APP_PORT}/wp-admin/"
 

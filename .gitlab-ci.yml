@@ -48,6 +48,9 @@ unit-test:
       --admin_email=$WP_EMAIL
       --allow-root
 
+    - echo "Installing plugin dependencies"
+    - docker compose -f ci/docker/compose.yml exec -w /var/www/html/wp-content/plugins/$WP_PLUGIN_SLUG wordpress composer install
+
     - echo "Activating the plugin ..."
     - docker compose -f ci/docker/compose.yml exec wordpress wp plugin activate $WP_PLUGIN_SLUG --allow-root
 
@@ -57,9 +60,9 @@ unit-test:
     - echo "Running Plugin Check..."
     - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin install plugin-check --allow-root
     - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin activate plugin-check --allow-root
-    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin check $WP_PLUGIN_SLUG --exclude-files=.* --allow-root > reports/plugin-check-report.md
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec wordpress wp plugin check $WP_PLUGIN_SLUG --format=json --exclude-files=.* --allow-root > reports/plugin-check-report.json
     - echo "==================================="
-    - cat reports/plugin-check-report.md
+    - cat reports/plugin-check-report.json
     - echo "==================================="
 
     - echo "Running PHPUnit tests..."
@@ -71,7 +74,7 @@ unit-test:
   artifacts:
     when: always
     paths:
-      - reports/plugin-check-report.md
+      - reports/plugin-check-report.json
     reports:
-      junit: reports/phpunit-report.xml
+      junit: reports/*.xml
     expire_in: "90 days"
