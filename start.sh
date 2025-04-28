@@ -57,9 +57,9 @@ docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml exec w
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml \
   exec wordpress wp plugin check $WP_PLUGIN_SLUG \
   --exclude-directories=ci,.stage \
-  --format=table \
+  --format=json \
   --exclude-files=.* \
-  --allow-root > ./.stage/reports/plugin-check-report.md
+  --allow-root > ./.stage/reports/plugin-check-report.json
 
 cat ./.stage/reports/plugin-check-report.md
 
