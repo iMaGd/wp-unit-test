@@ -7,6 +7,9 @@ services:
         WORDPRESS_TAG: ${WORDPRESS_TAG:-6-php8.3-apache}
         WP_PLUGIN_SLUG: ${WP_PLUGIN_SLUG:-wp-unit-test}
     restart: unless-stopped
+    volumes:
+      - ${WP_DATA_DIR}:/var/www/html
+      - ./tmp_build:/var/www/html/wp-content/plugins/${WP_PLUGIN_SLUG}
     ports:
       - ${APP_PORT:-8050}:80
     environment:

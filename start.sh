@@ -18,6 +18,11 @@ rsync -av \
   --delete-after \
   ./ ./ci/docker/tmp_build/
 
+# Remove redundant files
+rm -f ./ci/docker/tmp_build/.phpunit.result.cache ./ci/docker/tmp_build/composer.lock
+
+# # install deps
+composer install --working-dir=./ci/docker/tmp_build/
 
 # start services
 docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml down --remove-orphans
