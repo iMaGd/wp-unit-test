@@ -27,11 +27,8 @@ unit-test:
       --delete-after
       ./ ./ci/docker/tmp_build/
 
-    - composer config --global allow-plugins.composer/installers true
-    - composer install --working-dir=./ci/docker/tmp_build/
-
     - echo "Starting WordPress and DB services..."
-    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d --build
+    - docker compose --env-file ci/docker/.env.testing -f ci/docker/compose.yml up -d --build --remove-orphans
 
     - echo "Waiting for DB to be ready..."
     - until docker compose -f ci/docker/compose.yml exec database mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
